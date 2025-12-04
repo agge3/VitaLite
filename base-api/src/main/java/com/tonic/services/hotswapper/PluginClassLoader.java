@@ -20,7 +20,9 @@ public class PluginClassLoader extends URLClassLoader {
 
     public PluginClassLoader(File plugin, ClassLoader parent) throws MalformedURLException
     {
-        super(new URL[]{plugin.toURI().toURL()}, null);
+        super(new URL[]{PluginClassLoader.resolveURL(plugin)}, null);
+		System.out.println("XXX: ctor: parent: " + parent);
+		System.out.println("XXX: ctor: classloader: " + this);
         try
         {
             jarFile = new JarFile(plugin, true, ZipFile.OPEN_READ, JarFile.runtimeVersion());
@@ -31,9 +33,23 @@ public class PluginClassLoader extends URLClassLoader {
         this.parent = parent;
     }
 
+	public static URL resolveURL(File plugin) throws MalformedURLException {
+		try {
+			URL url = plugin.getCanonicalFile().toURI().toURL();
+			System.out.println("XXX: resolveURL TRY: " + url);
+			return url;
+		} catch (IOException e) {
+			URL url = plugin.toURI().toURL();
+			System.out.println("XXX: resolveURL: EXCEPTION: " + e);
+			System.out.println("XXX: resolveURL: url: " + url);
+			return url;
+		}
+	}
+
     public List<Class<?>> getPluginClasses() throws IOException {
         return getClasses().stream()
             .filter(this::inheritsPluginClass)
+			.peek(c -> System.out.println("XXX: getPluginClasses: " + c.getName()))
             .collect(Collectors.toList());
     }
 
@@ -42,6 +58,7 @@ public class PluginClassLoader extends URLClassLoader {
                 .getAllClasses()
                 .stream()
                 .filter(info -> !info.getName().equals("module-info"))
+				.peek(info -> System.out.println("XXX: getClasses: " + info.getName()))
                 .map(ClassPath.ClassInfo::load)
                 .collect(Collectors.toList());
     }

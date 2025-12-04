@@ -45,6 +45,14 @@ public class PluginReloader {
         }, "PluginClassLoader-Cleanup"));
 
         List<File> jars = findJars().stream()
+				.map(p -> {
+					System.out.println("XXX: jars: " + p);
+					try {
+						return p.toRealPath();
+					} catch (IOException e) {
+						return p;
+					}
+				})
                 .map(Path::toFile)
                 .collect(Collectors.toList());
 
